@@ -8,6 +8,8 @@
   const overlayTitleEl = document.getElementById('overlayTitle');
   const overlayTextEl = document.getElementById('overlayText');
   const restartBtn = document.getElementById('restartBtn');
+  const leftBtn = document.getElementById('leftBtn');
+  const rightBtn = document.getElementById('rightBtn');
 
   const obstacleSprite = new Image();
   let obstacleSpriteReady = false;
@@ -342,6 +344,7 @@
   }
 
   window.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') e.preventDefault();
     if (e.key === 'ArrowLeft') state.keys.left = true;
     if (e.key === 'ArrowRight') state.keys.right = true;
 
@@ -362,6 +365,80 @@
   restartBtn.addEventListener('click', () => {
     restart();
   });
+
+  function setDir(left, right) {
+    state.keys.left = left;
+    state.keys.right = right;
+  }
+
+  function bindHoldButton(el, onPress, onRelease) {
+    if (!el) return;
+    const press = (e) => {
+      if (e && e.cancelable) e.preventDefault();
+      onPress();
+    };
+    const release = (e) => {
+      if (e && e.cancelable) e.preventDefault();
+      onRelease();
+    };
+
+    el.addEventListener('pointerdown', press, { passive: false });
+    el.addEventListener('pointerup', release, { passive: false });
+    el.addEventListener('pointercancel', release, { passive: false });
+    el.addEventListener('pointerleave', release, { passive: false });
+  }
+
+  bindHoldButton(
+    leftBtn,
+    () => setDir(true, false),
+    () => setDir(false, false),
+  );
+  bindHoldButton(
+    rightBtn,
+    () => setDir(false, true),
+    () => setDir(false, false),
+  );
+
+  function canvasDirFromPointer(e) {
+    const rect = canvas.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    return x < rect.width / 2 ? 'left' : 'right';
+  }
+
+  canvas.addEventListener(
+    'pointerdown',
+    (e) => {
+      if (e.cancelable) e.preventDefault();
+      const dir = canvasDirFromPointer(e);
+      if (dir === 'left') setDir(true, false);
+      else setDir(false, true);
+    },
+    { passive: false },
+  );
+  canvas.addEventListener(
+    'pointerup',
+    (e) => {
+      if (e.cancelable) e.preventDefault();
+      setDir(false, false);
+    },
+    { passive: false },
+  );
+  canvas.addEventListener(
+    'pointercancel',
+    (e) => {
+      if (e.cancelable) e.preventDefault();
+      setDir(false, false);
+    },
+    { passive: false },
+  );
+  canvas.addEventListener(
+    'pointerleave',
+    (e) => {
+      if (e.cancelable) e.preventDefault();
+      setDir(false, false);
+    },
+    { passive: false },
+  );
 
   start();
 })();
